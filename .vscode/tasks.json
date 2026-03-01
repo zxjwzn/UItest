@@ -4,7 +4,7 @@
         {
             "label": "Sync Sources",
             "type": "process",
-            "command": "powershell",
+            "command": "pwsh",
             "args": [
                 "-ExecutionPolicy", "Bypass",
                 "-File", "${workspaceFolder}/.vscode/sync-sources.ps1"

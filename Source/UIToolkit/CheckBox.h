@@ -38,6 +38,10 @@ public:
         button.setAlpha(0.0f);
         button.onStateChange = [this]() { startCheckAnimation(); };
         addChildMouseListener(button);
+
+        // Sync initial visual state without animation when the button is
+        // already toggled on (e.g. restored from APVTS saved state).
+        syncInitialState();
     }
 
     ~CheckBox() override { removeChildMouseListener(button); }
@@ -137,7 +141,7 @@ public:
         constexpr float padLeft = 3.0f;
         float contentRight = padLeft + boxSize;
         if (label.isNotEmpty())
-            contentRight += 8.0f + juce::Font(juce::FontOptions(11.0f)).getStringWidthFloat(label);
+            contentRight += 8.0f + cachedLabelWidth;
         return static_cast<float>(x) >= 0.0f && static_cast<float>(x) <= contentRight;
     }
 
@@ -151,7 +155,6 @@ public:
     void setChecked(bool on, juce::NotificationType notification = juce::sendNotification)
     {
         button.setToggleState(on, notification);
-        repaint();
     }
 
 private:
@@ -168,6 +171,9 @@ private:
 
         lastCheckedState = checked;
         const float target = checked ? 1.0f : 0.0f;
+
+        // Remove the previous animator to avoid accumulation in the updater
+        checkAnimUpdater.removeAnimator(checkAnimator);
 
         checkAnimator = juce::ValueAnimatorBuilder{}
             .withDurationMs(checkAnimDurationMs)
@@ -192,11 +198,27 @@ private:
     juce::ToggleButton button;
     juce::String label;
 
+    /** Label width in pixels, computed once to avoid per-frame Font construction. */
+    float cachedLabelWidth = [this]() {
+        if (label.isEmpty()) return 0.0f;
+        juce::GlyphArrangement glyphs;
+        glyphs.addLineOfText(juce::Font(juce::FontOptions(11.0f)), label, 0.0f, 0.0f);
+        return glyphs.getBoundingBox(0, -1, true).getWidth();
+    }();
+
     juce::VBlankAnimatorUpdater checkAnimUpdater;
     juce::Animator              checkAnimator { juce::ValueAnimatorBuilder{}.build() };
 
     float checkProgress      = 0.0f;   ///< 0 = unchecked, 1 = checked
     bool  lastCheckedState   = false;   ///< Tracks state to detect real changes
+
+    /** Jump to the correct visual state without animation (called once in ctor). */
+    void syncInitialState()
+    {
+        const bool on = button.getToggleState();
+        checkProgress    = on ? 1.0f : 0.0f;
+        lastCheckedState = on;
+    }
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(CheckBox)
 };

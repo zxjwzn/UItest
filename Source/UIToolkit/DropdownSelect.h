@@ -51,11 +51,21 @@ public:
         comboBox.setColour(juce::PopupMenu::highlightedBackgroundColourId, Colors::accent);
         comboBox.setColour(juce::PopupMenu::highlightedTextColourId, Colors::textBright);
 
+        // When the popup closes, check if the mouse is still over us
+        comboBox.onPopupClosed = [this]()
+        {
+            if (getHoverProgress() > 0.001f && !isMouseOver(true))
+                startHoverAnimation(0.0f);
+        };
+
         addAndMakeVisible(comboBox);
         addChildMouseListener(comboBox);
     }
 
-    ~DropdownSelect() override { removeChildMouseListener(comboBox); }
+    ~DropdownSelect() override
+    {
+        removeChildMouseListener(comboBox);
+    }
 
     void paint(juce::Graphics& g) override
     {
@@ -64,20 +74,12 @@ public:
         {
             g.setColour(Colors::textDim);
             g.setFont(juce::FontOptions(11.0f));
-            g.drawText(label, 0, 0, static_cast<int>(getLabelWidth() - 4.0f),
+            g.drawText(label, 0, 0, static_cast<int>(cachedLabelWidth + 6.0f),
                        getHeight(), juce::Justification::centredLeft);
         }
 
         // Hover glow border around the combo box area
         const float hp = getHoverProgress();
-
-        // After a popup closes the mouse may no longer be over us, but
-        // mouseExit was never fired. Correct the stale hover here.
-        if (hp > 0.001f && !isMouseOver(true))
-        {
-            startHoverAnimation(0.0f);
-            return;   // will repaint via the fade-out animation
-        }
 
         if (hp > 0.001f)
         {
@@ -89,7 +91,7 @@ public:
     void resized() override
     {
         constexpr int glowPad = 2;  // room for hover glow border on all sides
-        const float labelW = label.isNotEmpty() ? getLabelWidth() : 0.0f;
+        const float labelW = label.isNotEmpty() ? (cachedLabelWidth + 10.0f) : 0.0f;
         const int left = static_cast<int>(labelW) + glowPad;
 
         comboBox.setBounds(
@@ -119,15 +121,55 @@ public:
     int getSelectedIndex() const { return comboBox.getSelectedItemIndex(); }
 
 private:
-    float getLabelWidth() const
+    /** ComboBox subclass that fires a callback when its popup is dismissed.
+     *  showPopup() is the only virtual hook on ComboBox; after calling the
+     *  base implementation we poll isPopupActive() via one-shot
+     *  Timer::callAfterDelay until the menu closes. */
+    class InternalComboBox : public juce::ComboBox
     {
+    public:
+        using juce::ComboBox::ComboBox;
+
+        std::function<void()> onPopupClosed;
+
+        void showPopup() override
+        {
+            juce::ComboBox::showPopup();
+            schedulePopupCloseCheck();
+        }
+
+    private:
+        void schedulePopupCloseCheck()
+        {
+            juce::Timer::callAfterDelay(50,
+                [safeThis = juce::Component::SafePointer<InternalComboBox>(this)]()
+                {
+                    if (safeThis == nullptr) return;
+
+                    if (safeThis->isPopupActive())
+                    {
+                        // Popup still open — check again later
+                        safeThis->schedulePopupCloseCheck();
+                        return;
+                    }
+
+                    // Popup just closed
+                    if (safeThis->onPopupClosed)
+                        safeThis->onPopupClosed();
+                });
+        }
+    };
+
+    InternalComboBox comboBox;
+    juce::String label;
+
+    /** Label width in pixels, computed once to avoid per-frame Font construction. */
+    float cachedLabelWidth = [this]() {
+        if (label.isEmpty()) return 0.0f;
         juce::GlyphArrangement glyphs;
         glyphs.addLineOfText(juce::Font(juce::FontOptions(11.0f)), label, 0.0f, 0.0f);
-        return glyphs.getBoundingBox(0, -1, true).getWidth() + 10.0f;
-    }
-
-    juce::ComboBox comboBox;
-    juce::String label;
+        return glyphs.getBoundingBox(0, -1, true).getWidth();
+    }();
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(DropdownSelect)
 };

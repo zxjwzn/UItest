@@ -3066,6 +3066,10 @@
     <ClInclude Include="..\..\Source\UIToolkit\SectionPanel.h"/>
     <ClInclude Include="..\..\Source\UIToolkit\ToggleSwitch.h"/>
     <ClInclude Include="..\..\Source\UIToolkit\UIToolkit.h"/>
+    <ClInclude Include="..\..\Source\UIToolkit\DropdownSelect.h"/>
+    <ClInclude Include="..\..\Source\UIToolkit\Easings.h"/>
+    <ClInclude Include="..\..\Source\UIToolkit\HoverAnimatable.h"/>
+    <ClInclude Include="..\..\Source\UIToolkit\TextInput.h"/>
     <ClInclude Include="..\..\..\..\App\modules\juce_animation\animation\juce_Animator.h"/>
     <ClInclude Include="..\..\..\..\App\modules\juce_animation\animation\juce_AnimatorSetBuilder.h"/>
     <ClInclude Include="..\..\..\..\App\modules\juce_animation\animation\juce_AnimatorUpdater.h"/>

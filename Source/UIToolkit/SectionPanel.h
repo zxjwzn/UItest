@@ -26,27 +26,30 @@ public:
 
     void paint(juce::Graphics& g) override
     {
-        const auto bounds = getLocalBounds().toFloat().reduced(1.0f);
+        const auto bounds = getLocalBounds().toFloat().reduced(borderInset);
 
         // Panel background with rounded corners
         g.setColour(Colors::panelBackground);
-        g.fillRoundedRectangle(bounds, 8.0f);
+        g.fillRoundedRectangle(bounds, cornerRadius);
 
         // Subtle border
         g.setColour(Colors::panelBorder.withAlpha(0.3f));
-        g.drawRoundedRectangle(bounds, 8.0f, 1.0f);
+        g.drawRoundedRectangle(bounds, cornerRadius, 1.0f);
 
         // Section title
         g.setColour(Colors::accent);
         g.setFont(juce::FontOptions(13.0f, juce::Font::bold));
-        g.drawText(sectionTitle, bounds.reduced(12.0f, 6.0f).removeFromTop(20.0f),
+        g.drawText(sectionTitle,
+                   bounds.reduced(contentPadX, contentPadY).removeFromTop(titleHeight),
                    juce::Justification::centredLeft);
     }
 
     /** Get the content area (below the title). */
     juce::Rectangle<int> getContentArea() const
     {
-        return getLocalBounds().reduced(8, 4).withTrimmedTop(22);
+        return getLocalBounds()
+            .reduced(static_cast<int>(contentPadX), static_cast<int>(contentPadY))
+            .withTrimmedTop(static_cast<int>(titleHeight) + titleGap);
     }
 
     void mouseDown(const juce::MouseEvent&) override
@@ -57,6 +60,14 @@ public:
 
 private:
     juce::String sectionTitle;
+
+    // ── Layout constants (single source of truth) ───────────────
+    static constexpr float borderInset  = 1.0f;
+    static constexpr float cornerRadius = 8.0f;
+    static constexpr float contentPadX  = 12.0f;   // horizontal padding inside panel
+    static constexpr float contentPadY  = 6.0f;    // vertical padding inside panel
+    static constexpr float titleHeight  = 20.0f;   // height reserved for the title text
+    static constexpr int   titleGap     = 2;       // gap between title bottom and content
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(SectionPanel)
 };

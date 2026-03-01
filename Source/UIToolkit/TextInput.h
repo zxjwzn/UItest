@@ -84,6 +84,13 @@ public:
             if (onTextChange)
                 onTextChange(editor.getText());
         };
+
+        // Return-key callback forwarding
+        editor.onReturnKeyPressed = [this]()
+        {
+            if (onReturnKey)
+                onReturnKey();
+        };
     }
 
     ~TextInput() override { removeChildMouseListener(editor); }
@@ -101,7 +108,7 @@ public:
         {
             g.setColour(Colors::textDim);
             g.setFont(juce::FontOptions(11.0f));
-            g.drawText(label, 0, 0, static_cast<int>(getLabelWidth() - 4.0f),
+            g.drawText(label, 0, 0, static_cast<int>(cachedLabelWidth + 6.0f),
                        getHeight(), juce::Justification::centredLeft);
         }
 
@@ -135,7 +142,7 @@ public:
     void resized() override
     {
         constexpr int glowPad = 2;
-        const float labelW = label.isNotEmpty() ? getLabelWidth() : 0.0f;
+        const float labelW = label.isNotEmpty() ? (cachedLabelWidth + 10.0f) : 0.0f;
         const int left = static_cast<int>(labelW) + glowPad;
 
         // Leave room for glow on all sides, inner padding for text
@@ -194,6 +201,9 @@ private:
     {
         const float target = focusing ? 1.0f : 0.0f;
 
+        // Remove the previous animator to avoid accumulation in the updater
+        focusAnimUpdater.removeAnimator(focusAnimator);
+
         focusAnimator = juce::ValueAnimatorBuilder{}
             .withDurationMs(focusAnimDurationMs)
             .withEasing(focusing ? Easing::easeOutCubic() : Easing::easeInCubic())
@@ -213,13 +223,6 @@ private:
     }
 
     // ── Helpers ─────────────────────────────────────────────────
-
-    float getLabelWidth() const
-    {
-        juce::GlyphArrangement glyphs;
-        glyphs.addLineOfText(juce::Font(juce::FontOptions(11.0f)), label, 0.0f, 0.0f);
-        return glyphs.getBoundingBox(0, -1, true).getWidth() + 10.0f;
-    }
 
     // ── Wrapped TextEditor with focus callback hooks ────────────
 
@@ -244,11 +247,19 @@ private:
             if (onFocusLost) onFocusLost();
         }
 
+        /** Callback fired when Return is pressed (before focus is released). */
+        std::function<void()> onReturnKeyPressed;
+
         bool keyPressed(const juce::KeyPress& key) override
         {
-            if (key == juce::KeyPress::returnKey || key == juce::KeyPress::escapeKey)
+            if (key == juce::KeyPress::returnKey)
             {
-                // Move focus away so focusLost fires
+                if (onReturnKeyPressed) onReturnKeyPressed();
+                giveAwayKeyboardFocus();
+                return true;
+            }
+            if (key == juce::KeyPress::escapeKey)
+            {
                 giveAwayKeyboardFocus();
                 return true;
             }
@@ -260,6 +271,14 @@ private:
 
     InternalEditor editor;
     juce::String   label;
+
+    /** Label width in pixels, computed once to avoid per-frame Font construction. */
+    float cachedLabelWidth = [this]() {
+        if (label.isEmpty()) return 0.0f;
+        juce::GlyphArrangement glyphs;
+        glyphs.addLineOfText(juce::Font(juce::FontOptions(11.0f)), label, 0.0f, 0.0f);
+        return glyphs.getBoundingBox(0, -1, true).getWidth();
+    }();
 
     juce::VBlankAnimatorUpdater focusAnimUpdater;
     juce::Animator              focusAnimator { juce::ValueAnimatorBuilder{}.build() };

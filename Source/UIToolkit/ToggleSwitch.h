@@ -44,6 +44,10 @@ public:
 
         // React to every state change (user click *and* APVTS-driven changes)
         button.onStateChange = [this]() { startAnimation(); };
+
+        // Sync initial visual state without animation when the button is
+        // already toggled on (e.g. restored from APVTS saved state).
+        syncInitialState();
     }
 
     ~ToggleSwitch() override { removeChildMouseListener(button); }
@@ -121,7 +125,7 @@ public:
         constexpr float padLeft = 2.0f;
         float contentRight = padLeft + trackWidth;
         if (label.isNotEmpty())
-            contentRight += 8.0f + juce::Font(juce::FontOptions(11.0f)).getStringWidthFloat(label);
+            contentRight += 8.0f + cachedLabelWidth;
         return static_cast<float>(x) >= 0.0f && static_cast<float>(x) <= contentRight;
     }
 
@@ -154,6 +158,9 @@ private:
 
         // Build a new animator that interpolates from the current visual
         // position to the target, so mid-animation reversals are seamless.
+        // Remove the previous animator to avoid accumulation in the updater
+        animatorUpdater.removeAnimator(animator);
+
         animator = juce::ValueAnimatorBuilder{}
             .withDurationMs(animDurationMs)
             .withEasing(Easing::easeOutCubic())
@@ -177,11 +184,27 @@ private:
     juce::ToggleButton button;
     juce::String       label;
 
+    /** Label width in pixels, computed once to avoid per-frame Font construction. */
+    float cachedLabelWidth = [this]() {
+        if (label.isEmpty()) return 0.0f;
+        juce::GlyphArrangement glyphs;
+        glyphs.addLineOfText(juce::Font(juce::FontOptions(11.0f)), label, 0.0f, 0.0f);
+        return glyphs.getBoundingBox(0, -1, true).getWidth();
+    }();
+
     juce::VBlankAnimatorUpdater animatorUpdater;
     juce::Animator              animator { juce::ValueAnimatorBuilder{}.build() };
 
     float animProgress    = 0.0f;    ///< Current visual position: 0 = off, 1 = on
     bool  lastToggleState = false;   ///< Tracks toggle state to detect real changes
+
+    /** Jump to the correct visual state without animation (called once in ctor). */
+    void syncInitialState()
+    {
+        const bool on = button.getToggleState();
+        animProgress    = on ? 1.0f : 0.0f;
+        lastToggleState = on;
+    }
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(ToggleSwitch)
 };

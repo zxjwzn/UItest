@@ -17,8 +17,9 @@
 | `ArcKnob.h` | `gui::ArcKnob` | 270° 圆弧旋钮，渐变弧线 + 拇指点 + 居中数值 + 底部标签（悬停：轨道点亮 + 拇指放大） |
 | `SectionPanel.h` | `gui::SectionPanel` | 圆角矩形面板容器，带标题文字 |
 | `ToggleSwitch.h` | `gui::ToggleSwitch` | iOS 风格滑动开关，带标签（VBlank 切换动画 + 悬停描边） |
-| `CheckBox.h` | `gui::CheckBox` | 暗色主题勾选框，带标签（悬停描边） |
+| `CheckBox.h` | `gui::CheckBox` | 暗色主题勾选框，带标签（VBlank 勾选/取消勾选逐笔画动画 + 悬停描边） |
 | `DropdownSelect.h` | `gui::DropdownSelect` | 暗色主题下拉选择框，带可选标签，可绑定 APVTS Choice 参数（悬停描边） |
+| `TextInput.h` | `gui::TextInput` | 暗色主题单行文本输入框，带可选标签（VBlank 聚焦/失焦动画 + 悬停描边，Return/Escape 退出编辑） |
 
 ### 组合工具
 
@@ -139,6 +140,29 @@ auto attach = std::make_unique<
     apvts, "filterType", filterType.getComboBox());
 ```
 
+### TextInput — 文本输入框
+
+```cpp
+#include "UIToolkit/TextInput.h"
+
+gui::TextInput nameInput{ "Name", "Enter name..." };
+addAndMakeVisible(nameInput);
+
+// 读取/设置文本
+nameInput.setText("Hello");
+juce::String value = nameInput.getText();
+
+// 监听文本变化
+nameInput.onTextChange = [](const juce::String& text) { DBG(text); };
+
+// 限制字符/长度
+nameInput.setMaxLength(32);
+nameInput.setAllowedCharacters("0123456789.");
+
+// 访问底层 TextEditor
+auto& editor = nameInput.getEditor();
+```
+
 ### SectionPanel — 分区面板
 
 ```cpp
@@ -221,17 +245,17 @@ public:
 ```cpp
 namespace gui::Colors
 {
-    static const juce::Colour background     { 0xff1A1A2E };  // 全局背景
-    static const juce::Colour panelBackground{ 0xff16213E };  // 面板背景
-    static const juce::Colour panelBorder    { 0xff0F3460 };  // 面板边框
-    static const juce::Colour accent         { 0xffE94560 };  // 强调色（旋钮弧线、标题、开关等）
-    static const juce::Colour accentDark     { 0xffA83279 };  // 渐变暗端
-    static const juce::Colour textBright     { 0xffEEEEEE };  // 亮文字
-    static const juce::Colour textDim        { 0xff8899AA };  // 暗文字
-    static const juce::Colour knobBackground { 0xff0A0E1A };  // 旋钮圆盘背景
-    static const juce::Colour knobArcTrack   { 0xff2A2E4A };  // 弧线轨道
-    static const juce::Colour knobArcActive  { 0xffE94560 };  // 弧线激活色
-    static const juce::Colour knobThumb      { 0xffFFFFFF };  // 拇指点
+    inline const juce::Colour background     { 0xff1A1A2E };  // 全局背景
+    inline const juce::Colour panelBackground{ 0xff16213E };  // 面板背景
+    inline const juce::Colour panelBorder    { 0xff0F3460 };  // 面板边框
+    inline const juce::Colour accent         { 0xffE94560 };  // 强调色（旋钮弧线、标题、开关等）
+    inline const juce::Colour accentDark     { 0xffA83279 };  // 渐变暗端
+    inline const juce::Colour textBright     { 0xffEEEEEE };  // 亮文字
+    inline const juce::Colour textDim        { 0xff8899AA };  // 暗文字
+    inline const juce::Colour knobBackground { 0xff0A0E1A };  // 旋钮圆盘背景
+    inline const juce::Colour knobArcTrack   { 0xff2A2E4A };  // 弧线轨道
+    inline const juce::Colour knobArcActive  { 0xffE94560 };  // 弧线激活色
+    inline const juce::Colour knobThumb      { 0xffFFFFFF };  // 拇指点
     // ...
 }
 ```
@@ -281,8 +305,9 @@ HoverAnimatable.h          ← CRTP hover 动画 mixin（依赖 Easings.h）
 ├── ArcKnob.h              ← 依赖 HoverAnimatable.h（轨道点亮 + 拇指放大）
 ├── SectionPanel.h
 ├── ToggleSwitch.h         ← 依赖 Easings.h + HoverAnimatable.h
-├── CheckBox.h             ← 依赖 HoverAnimatable.h
-└── DropdownSelect.h       ← 依赖 HoverAnimatable.h
+├── CheckBox.h             ← 依赖 Easings.h + HoverAnimatable.h（VBlank 勾选动画）
+├── DropdownSelect.h       ← 依赖 HoverAnimatable.h
+└── TextInput.h            ← 依赖 Easings.h + HoverAnimatable.h（VBlank 聚焦动画）
 
 ArcKnob.h
 └── KnobStrip.h

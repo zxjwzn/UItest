@@ -8,6 +8,7 @@
 
 #include <JuceHeader.h>
 #include "CustomLookAndFeel.h"
+#include "Easings.h"
 #include "HoverAnimatable.h"
 
 namespace gui
@@ -23,12 +24,12 @@ namespace gui
  *   - Thumb dot that grows on hover
  */
 class ArcKnob : public juce::Component,
-                public HoverAnimatable<ArcKnob>,
-                private juce::Slider::Listener
+                public HoverAnimatable<ArcKnob>
 {
 public:
     ArcKnob(const juce::String& labelText, const juce::String& suffix = "")
-        : HoverAnimatable(this), label(labelText), valueSuffix(suffix)
+        : HoverAnimatable(this), label(labelText), valueSuffix(suffix),
+          introAnimUpdater(this)
     {
         slider.setSliderStyle(juce::Slider::RotaryHorizontalVerticalDrag);
         slider.setTextBoxStyle(juce::Slider::NoTextBox, true, 0, 0);
@@ -38,18 +39,25 @@ public:
 
         // Custom painting — we override paint, slider is invisible but handles mouse
         slider.setAlpha(0.0f);
-        slider.addListener(this);
+        slider.onValueChange = [this]() { repaint(); };
         addChildMouseListener(slider);
     }
 
     ~ArcKnob() override
     {
         removeChildMouseListener(slider);
-        slider.removeListener(this);
     }
 
     void paint(juce::Graphics& g) override
     {
+        // Trigger intro animation on first paint (component is on-screen,
+        // APVTS values are restored, VBlank peer is available).
+        if (!introPlayed)
+        {
+            introPlayed = true;
+            startIntroAnimation();
+        }
+
         const auto bounds = getLocalBounds().toFloat();
         const float knobSize = juce::jmin(bounds.getWidth(), bounds.getHeight() - 18.0f);
         const float radius = knobSize * 0.42f;
@@ -76,9 +84,10 @@ public:
         g.strokePath(bgArc, juce::PathStrokeType(arcThickness,
                      juce::PathStrokeType::curved, juce::PathStrokeType::rounded));
 
-        // Active arc
-        const float proportion = static_cast<float>(
+        // Active arc — scaled by introProgress for startup animation
+        const float rawProportion = static_cast<float>(
             slider.valueToProportionOfLength(slider.getValue()));
+        const float proportion = rawProportion * introProgress;
         const float currentAngle = startAngle + proportion * (endAngle - startAngle);
 
         if (proportion > 0.001f)
@@ -106,17 +115,7 @@ public:
 
         // Value text at center
         {
-            juce::String valueStr;
-            const double val = slider.getValue();
-
-            if (std::abs(val) >= 100.0)
-                valueStr = juce::String(static_cast<int>(val));
-            else if (std::abs(val) >= 10.0)
-                valueStr = juce::String(val, 1);
-            else
-                valueStr = juce::String(val, 2);
-
-            valueStr += valueSuffix;
+            juce::String valueStr = slider.getTextFromValue(slider.getValue()) + valueSuffix;
 
             g.setColour(Colors::textBright);
             g.setFont(juce::FontOptions(11.0f));
@@ -169,11 +168,42 @@ public:
     juce::Slider& getSlider() { return slider; }
 
 private:
-    void sliderValueChanged(juce::Slider*) override { repaint(); }
+    // ── Intro animation ─────────────────────────────────────────
+
+    /** Each knob gets a random duration between 400–800 ms so they don't
+     *  all land at the same time — feels more organic. */
+    double introAnimDurationMs = 300.0 + juce::Random::getSystemRandom().nextDouble() * 700.0;
+
+    /** Animate introProgress from 0 → 1 so the arc sweeps from zero to the
+     *  actual slider value. Called once on first paint. */
+    void startIntroAnimation()
+    {
+        introAnimUpdater.removeAnimator(introAnimator);
+
+        introAnimator = juce::ValueAnimatorBuilder{}
+            .withDurationMs(introAnimDurationMs)
+            .withEasing(Easing::easeOutQuart())
+            .withValueChangedCallback([this](float progress)
+            {
+                introProgress = progress;
+                repaint();
+            })
+            .build();
+
+        introAnimUpdater.addAnimator(introAnimator);
+        introAnimator.start();
+    }
+
+    // ── Members ─────────────────────────────────────────────────
 
     juce::Slider slider;
     juce::String label;
-    juce::String valueSuffix;
+    juce::String valueSuffix;   ///< Kept for reference; display now uses slider.getTextFromValue()
+
+    juce::VBlankAnimatorUpdater introAnimUpdater;
+    juce::Animator              introAnimator { juce::ValueAnimatorBuilder{}.build() };
+    float introProgress  = 0.0f;   ///< 0 = start, 1 = fully revealed
+    bool  introPlayed    = false;  ///< Ensures the animation runs only once
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(ArcKnob)
 };

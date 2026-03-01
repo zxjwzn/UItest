@@ -101,6 +101,9 @@ protected:
     /** Programmatically start the hover animation to a target value. */
     void startHoverAnimation(float target)
     {
+        // Remove the previous animator to avoid accumulation in the updater
+        hoverUpdater.removeAnimator(hoverAnimator);
+
         hoverAnimator = juce::ValueAnimatorBuilder{}
             .withDurationMs(hoverDurationMs)
             .withEasing(Easing::easeOutSine())

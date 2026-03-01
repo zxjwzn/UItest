@@ -14,20 +14,20 @@ namespace gui
 /** Color palette for the dark theme. */
 namespace Colors
 {
-    static const juce::Colour background       { 0xff1A1A2E };
-    static const juce::Colour panelBackground  { 0xff16213E };
-    static const juce::Colour panelBorder      { 0xff0F3460 };
-    static const juce::Colour accent           { 0xffE94560 };
-    static const juce::Colour accentDark       { 0xffA83279 };
-    static const juce::Colour textBright       { 0xffEEEEEE };
-    static const juce::Colour textDim          { 0xff8899AA };
-    static const juce::Colour knobBackground   { 0xff0A0E1A };
-    static const juce::Colour knobArcTrack     { 0xff2A2E4A };
-    static const juce::Colour knobArcActive    { 0xffE94560 };
-    static const juce::Colour knobThumb        { 0xffFFFFFF };
-    static const juce::Colour waveformGreen    { 0xff00E676 };
-    static const juce::Colour spectrumCyan     { 0xff00BCD4 };
-    static const juce::Colour envelopeYellow   { 0xffFFD54F };
+    inline const juce::Colour background       { 0xff1A1A2E };
+    inline const juce::Colour panelBackground  { 0xff16213E };
+    inline const juce::Colour panelBorder      { 0xff0F3460 };
+    inline const juce::Colour accent           { 0xffE94560 };
+    inline const juce::Colour accentDark       { 0xffA83279 };
+    inline const juce::Colour textBright       { 0xffEEEEEE };
+    inline const juce::Colour textDim          { 0xff8899AA };
+    inline const juce::Colour knobBackground   { 0xff0A0E1A };
+    inline const juce::Colour knobArcTrack     { 0xff2A2E4A };
+    inline const juce::Colour knobArcActive    { 0xffE94560 };
+    inline const juce::Colour knobThumb        { 0xffFFFFFF };
+    inline const juce::Colour waveformGreen    { 0xff00E676 };
+    inline const juce::Colour spectrumCyan     { 0xff00BCD4 };
+    inline const juce::Colour envelopeYellow   { 0xffFFD54F };
 }
 
 /**
@@ -51,39 +51,6 @@ public:
         setColour(juce::ComboBox::backgroundColourId, Colors::panelBackground);
         setColour(juce::ComboBox::textColourId, Colors::textBright);
         setColour(juce::ComboBox::outlineColourId, Colors::panelBorder);
-    }
-
-    void drawRotarySlider(juce::Graphics& g, int x, int y, int width, int height,
-                          float sliderPosProportional, float rotaryStartAngle,
-                          float rotaryEndAngle, juce::Slider& /*slider*/) override
-    {
-        const float radius = static_cast<float>(juce::jmin(width, height)) * 0.4f;
-        const float centreX = static_cast<float>(x) + static_cast<float>(width) * 0.5f;
-        const float centreY = static_cast<float>(y) + static_cast<float>(height) * 0.5f;
-        const float angle = rotaryStartAngle
-                            + sliderPosProportional * (rotaryEndAngle - rotaryStartAngle);
-
-        // Background arc
-        juce::Path bgArc;
-        bgArc.addCentredArc(centreX, centreY, radius, radius, 0.0f,
-                            rotaryStartAngle, rotaryEndAngle, true);
-        g.setColour(Colors::knobArcTrack);
-        g.strokePath(bgArc, juce::PathStrokeType(3.0f));
-
-        // Active arc
-        juce::Path activeArc;
-        activeArc.addCentredArc(centreX, centreY, radius, radius, 0.0f,
-                                rotaryStartAngle, angle, true);
-        g.setColour(Colors::knobArcActive);
-        g.strokePath(activeArc, juce::PathStrokeType(3.0f));
-
-        // Thumb
-        juce::Path thumb;
-        const float thumbLen = radius * 0.3f;
-        thumb.addRectangle(-1.5f, -radius, 3.0f, thumbLen);
-        g.setColour(Colors::knobThumb);
-        g.fillPath(thumb, juce::AffineTransform::rotation(angle)
-                              .translated(centreX, centreY));
     }
 
     void drawLabel(juce::Graphics& g, juce::Label& label) override
@@ -120,7 +87,7 @@ public:
     void drawComboBox(juce::Graphics& g, int width, int height,
                       bool /*isButtonDown*/, int /*buttonX*/, int /*buttonY*/,
                       int /*buttonW*/, int /*buttonH*/,
-                      juce::ComboBox& box) override
+                      juce::ComboBox& /*box*/) override
     {
         const auto bounds = juce::Rectangle<float>(0.0f, 0.0f,
                             static_cast<float>(width), static_cast<float>(height)).reduced(0.5f);
@@ -130,6 +97,8 @@ public:
         g.setColour(Colors::knobBackground);
         g.fillRoundedRectangle(bounds, cornerSize);
 
+        // Border
+        g.setColour(Colors::panelBorder);
         g.drawRoundedRectangle(bounds, cornerSize, 1.2f);
 
         // Arrow chevron

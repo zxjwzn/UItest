@@ -37,11 +37,18 @@ public:
 
     /**
      * Initialize the strip with knob descriptors and bind to an APVTS.
-     * Call this once in the parent's constructor.
+     * Call this once in the parent's constructor. Subsequent calls are ignored.
      */
     void init(juce::AudioProcessorValueTreeState& apvts,
               const std::vector<KnobDescriptor>& descriptors)
     {
+        // Guard against accidental double-init
+        if (!knobs.empty())
+        {
+            jassertfalse;  // init() called more than once
+            return;
+        }
+
         for (const auto& desc : descriptors)
         {
             auto knob = std::make_unique<ArcKnob>(desc.label, desc.suffix);

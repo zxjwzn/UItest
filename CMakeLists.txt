@@ -79,6 +79,7 @@ endif()
 # -- Link JUCE Modules --------------------------------------------------------
 target_link_libraries(UItest
     PRIVATE
+        juce::juce_animation
         juce::juce_audio_basics
         juce::juce_audio_devices
         juce::juce_audio_formats

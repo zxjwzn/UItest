@@ -49,6 +49,12 @@ public:
         return getLocalBounds().reduced(8, 4).withTrimmedTop(22);
     }
 
+    void mouseDown(const juce::MouseEvent&) override
+    {
+        // Click on panel background → release keyboard focus from any child
+        unfocusAllComponents();
+    }
+
 private:
     juce::String sectionTitle;
 

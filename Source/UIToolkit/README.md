@@ -11,11 +11,14 @@
 
 | 文件 | 组件 | 说明 |
 |---|---|---|
-| `CustomLookAndFeel.h` | `gui::Colors` / `gui::CustomLookAndFeel` | 暗色调色盘 + LookAndFeel_V4 子类 |
-| `ArcKnob.h` | `gui::ArcKnob` | 270° 圆弧旋钮，渐变弧线 + 拇指点 + 居中数值 + 底部标签 |
+| `CustomLookAndFeel.h` | `gui::Colors` / `gui::CustomLookAndFeel` | 暗色调色盘 + LookAndFeel_V4 子类（含 ComboBox / PopupMenu 暗色绘制） |
+| `Easings.h` | `gui::Easing::*` | 36 条缓动曲线（Sine / Quad / Cubic / Quart / Quint / Expo / Circ / Back / Elastic / Bounce × In / Out / InOut），基于 `createCubicBezier` + 数学实现 |
+| `HoverAnimatable.h` | `gui::HoverAnimatable<T>` | CRTP 悬停动画 mixin，提供平滑的 `hoverProgress`（0→1），VBlank 驱动 |
+| `ArcKnob.h` | `gui::ArcKnob` | 270° 圆弧旋钮，渐变弧线 + 拇指点 + 居中数值 + 底部标签（悬停：轨道点亮 + 拇指放大） |
 | `SectionPanel.h` | `gui::SectionPanel` | 圆角矩形面板容器，带标题文字 |
-| `ToggleSwitch.h` | `gui::ToggleSwitch` | iOS 风格滑动开关，带标签 |
-| `CheckBox.h` | `gui::CheckBox` | 暗色主题勾选框，带标签 |
+| `ToggleSwitch.h` | `gui::ToggleSwitch` | iOS 风格滑动开关，带标签（VBlank 切换动画 + 悬停描边） |
+| `CheckBox.h` | `gui::CheckBox` | 暗色主题勾选框，带标签（悬停描边） |
+| `DropdownSelect.h` | `gui::DropdownSelect` | 暗色主题下拉选择框，带可选标签，可绑定 APVTS Choice 参数（悬停描边） |
 
 ### 组合工具
 
@@ -121,6 +124,21 @@ auto attach = std::make_unique<
     apvts, "oversample", oversampling.getButton());
 ```
 
+### DropdownSelect — 下拉选择框
+
+```cpp
+#include "UIToolkit/DropdownSelect.h"
+
+gui::DropdownSelect filterType{ "Type" };
+filterType.addItemList({ "LPF", "HPF", "BPF", "Notch" });
+addAndMakeVisible(filterType);
+
+// 绑定 APVTS Choice 参数
+auto attach = std::make_unique<
+    juce::AudioProcessorValueTreeState::ComboBoxAttachment>(
+    apvts, "filterType", filterType.getComboBox());
+```
+
 ### SectionPanel — 分区面板
 
 ```cpp
@@ -222,14 +240,49 @@ namespace gui::Colors
 
 ---
 
+## 缓动函数 (Easings)
+
+`gui::Easing` 命名空间提供 36 条标准缓动曲线（参考 [easings.net](https://easings.net)）：
+
+| 类型 | 实现方式 | easeIn | easeOut | easeInOut |
+|---|---|---|---|---|
+| Sine | cubic-bezier | `easeInSine()` | `easeOutSine()` | `easeInOutSine()` |
+| Quad | cubic-bezier | `easeInQuad()` | `easeOutQuad()` | `easeInOutQuad()` |
+| Cubic | cubic-bezier | `easeInCubic()` | `easeOutCubic()` | `easeInOutCubic()` |
+| Quart | cubic-bezier | `easeInQuart()` | `easeOutQuart()` | `easeInOutQuart()` |
+| Quint | cubic-bezier | `easeInQuint()` | `easeOutQuint()` | `easeInOutQuint()` |
+| Expo | cubic-bezier | `easeInExpo()` | `easeOutExpo()` | `easeInOutExpo()` |
+| Circ | cubic-bezier | `easeInCirc()` | `easeOutCirc()` | `easeInOutCirc()` |
+| Back | cubic-bezier | `easeInBack()` | `easeOutBack()` | `easeInOutBack()` |
+| Elastic | 数学公式 | `easeInElastic()` | `easeOutElastic()` | `easeInOutElastic()` |
+| Bounce | 数学公式 | `easeInBounce()` | `easeOutBounce()` | `easeInOutBounce()` |
+
+所有函数返回 `std::function<float(float)>`，可直接传入 `ValueAnimatorBuilder::withEasing()`：
+
+```cpp
+#include "UIToolkit/Easings.h"
+
+auto animator = juce::ValueAnimatorBuilder{}
+    .withDurationMs(300.0)
+    .withEasing(gui::Easing::easeOutCubic())
+    .withValueChangedCallback([this](float p) { /* ... */ })
+    .build();
+```
+
+---
+
 ## 依赖关系
 
 ```
-CustomLookAndFeel.h        ← 基础：Colors + LookAndFeel
-├── ArcKnob.h
+CustomLookAndFeel.h        ← 基础：Colors + LookAndFeel（含 ComboBox / PopupMenu 绘制）
+Easings.h                  ← 缓动函数库（juce::Easings::createCubicBezier 封装）
+HoverAnimatable.h          ← CRTP hover 动画 mixin（依赖 Easings.h）
+
+├── ArcKnob.h              ← 依赖 HoverAnimatable.h（轨道点亮 + 拇指放大）
 ├── SectionPanel.h
-├── ToggleSwitch.h
-└── CheckBox.h
+├── ToggleSwitch.h         ← 依赖 Easings.h + HoverAnimatable.h
+├── CheckBox.h             ← 依赖 HoverAnimatable.h
+└── DropdownSelect.h       ← 依赖 HoverAnimatable.h
 
 ArcKnob.h
 └── KnobStrip.h
@@ -242,5 +295,6 @@ UIToolkit.h                ← 总头文件，包含以上全部
 
 ## 要求
 
-- **JUCE 7.x / 8.x**（使用 `juce::FontOptions`）
+- **JUCE 8.x**（使用 `juce::FontOptions`、`juce_animation` 模块的 `VBlankAnimatorUpdater` / `ValueAnimatorBuilder`）
 - **C++17** 或更高
+- 需启用 **`juce_animation`** 模块

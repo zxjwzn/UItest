@@ -8,10 +8,14 @@
 
 // --- Core: Theme & Primitives ---
 #include "CustomLookAndFeel.h"
+#include "Easings.h"
+#include "HoverAnimatable.h"
 #include "ArcKnob.h"
 #include "SectionPanel.h"
 #include "ToggleSwitch.h"
 #include "CheckBox.h"
+#include "DropdownSelect.h"
+#include "TextInput.h"
 
 // --- Utilities: Composite Components ---
 #include "KnobStrip.h"

@@ -116,6 +116,119 @@ public:
         g.setColour(Colors::panelBorder);
         g.drawRoundedRectangle(bounds, 4.0f, 1.0f);
     }
+
+    void drawComboBox(juce::Graphics& g, int width, int height,
+                      bool /*isButtonDown*/, int /*buttonX*/, int /*buttonY*/,
+                      int /*buttonW*/, int /*buttonH*/,
+                      juce::ComboBox& box) override
+    {
+        const auto bounds = juce::Rectangle<float>(0.0f, 0.0f,
+                            static_cast<float>(width), static_cast<float>(height)).reduced(0.5f);
+        const float cornerSize = 5.0f;
+
+        // Background
+        g.setColour(Colors::knobBackground);
+        g.fillRoundedRectangle(bounds, cornerSize);
+
+        g.drawRoundedRectangle(bounds, cornerSize, 1.2f);
+
+        // Arrow chevron
+        {
+            const float arrowZone = 20.0f;
+            const float arrowX = bounds.getRight() - arrowZone - 4.0f;
+            const float arrowCY = bounds.getCentreY();
+            const float arrowHalf = 4.0f;
+
+            juce::Path arrow;
+            arrow.startNewSubPath(arrowX, arrowCY - arrowHalf * 0.5f);
+            arrow.lineTo(arrowX + arrowHalf, arrowCY + arrowHalf * 0.5f);
+            arrow.lineTo(arrowX + arrowHalf * 2.0f, arrowCY - arrowHalf * 0.5f);
+
+            g.setColour(Colors::textDim);
+            g.strokePath(arrow, juce::PathStrokeType(1.5f,
+                         juce::PathStrokeType::curved, juce::PathStrokeType::rounded));
+        }
+    }
+
+    // ── Popup Menu ──────────────────────────────────────────────
+
+    void drawPopupMenuBackground(juce::Graphics& g, int width, int height) override
+    {
+        const auto bounds = juce::Rectangle<float>(0.0f, 0.0f,
+                            static_cast<float>(width), static_cast<float>(height));
+
+        // Square corners — avoids white-corner artefacts from the opaque OS window
+        g.setColour(Colors::panelBackground);
+        g.fillRect(bounds);
+
+        g.setColour(Colors::panelBorder);
+        g.drawRect(bounds.reduced(0.5f), 1.0f);
+    }
+
+    void drawPopupMenuItem(juce::Graphics& g, const juce::Rectangle<int>& area,
+                           bool isSeparator, bool isActive, bool isHighlighted,
+                           bool isTicked, bool hasSubMenu,
+                           const juce::String& text, const juce::String& /*shortcutKeyText*/,
+                           const juce::Drawable* /*icon*/, const juce::Colour* /*textColour*/) override
+    {
+        if (isSeparator)
+        {
+            auto sepArea = area.reduced(8, 0).withSizeKeepingCentre(area.getWidth() - 16, 1);
+            g.setColour(Colors::panelBorder);
+            g.fillRect(sepArea);
+            return;
+        }
+
+        auto r = area.reduced(2, 0);
+
+        if (isHighlighted && isActive)
+        {
+            g.setColour(Colors::accent.withAlpha(0.25f));
+            g.fillRoundedRectangle(r.toFloat(), 4.0f);
+        }
+
+        g.setColour(isActive ? (isHighlighted ? Colors::textBright : Colors::textBright)
+                             : Colors::textDim);
+        g.setFont(juce::FontOptions(13.0f));
+
+        const int tickW = 24;
+        auto textArea = r.withTrimmedLeft(tickW);
+
+        if (isTicked)
+        {
+            // Draw a small check mark
+            const float cx = static_cast<float>(r.getX()) + 7.0f;
+            const float cy = static_cast<float>(r.getCentreY());
+
+            juce::Path tick;
+            tick.startNewSubPath(cx, cy);
+            tick.lineTo(cx + 3.5f, cy + 3.5f);
+            tick.lineTo(cx + 9.0f, cy - 3.5f);
+
+            g.setColour(Colors::accent);
+            g.strokePath(tick, juce::PathStrokeType(2.0f,
+                         juce::PathStrokeType::curved, juce::PathStrokeType::rounded));
+        }
+
+        g.drawFittedText(text, textArea, juce::Justification::centredLeft, 1);
+
+        if (hasSubMenu)
+        {
+            const float arrowH = 6.0f;
+            const float arrowX = static_cast<float>(r.getRight()) - 12.0f;
+            const float arrowY = static_cast<float>(r.getCentreY());
+
+            juce::Path arrow;
+            arrow.startNewSubPath(arrowX, arrowY - arrowH * 0.5f);
+            arrow.lineTo(arrowX + arrowH * 0.5f, arrowY);
+            arrow.lineTo(arrowX, arrowY + arrowH * 0.5f);
+
+            g.setColour(Colors::textDim);
+            g.strokePath(arrow, juce::PathStrokeType(1.5f));
+        }
+    }
+
+    int getPopupMenuBorderSize() override { return 1; }
 };
 
 } // namespace gui

@@ -184,6 +184,68 @@ void UItestAudioProcessor::setStateInformation (const void* data, int sizeInByte
 }
 
 //==============================================================================
+juce::AudioProcessorValueTreeState::ParameterLayout UItestAudioProcessor::createParameterLayout()
+{
+    juce::AudioProcessorValueTreeState::ParameterLayout layout;
+
+    // --- Standalone ArcKnob demo params ---
+    layout.add(std::make_unique<juce::AudioParameterFloat>(
+        juce::ParameterID{ "gain", 1 }, "Gain",
+        juce::NormalisableRange<float>(-60.0f, 12.0f, 0.1f), 0.0f));
+    layout.add(std::make_unique<juce::AudioParameterFloat>(
+        juce::ParameterID{ "pan", 1 }, "Pan",
+        juce::NormalisableRange<float>(-100.0f, 100.0f, 1.0f), 0.0f));
+    layout.add(std::make_unique<juce::AudioParameterFloat>(
+        juce::ParameterID{ "mix", 1 }, "Mix",
+        juce::NormalisableRange<float>(0.0f, 100.0f, 0.1f), 100.0f));
+
+    // --- Filter section (KnobStrip / SectionBase) ---
+    layout.add(std::make_unique<juce::AudioParameterFloat>(
+        juce::ParameterID{ "filterCutoff", 1 }, "Filter Cutoff",
+        juce::NormalisableRange<float>(20.0f, 20000.0f, 1.0f, 0.3f), 1000.0f));
+    layout.add(std::make_unique<juce::AudioParameterFloat>(
+        juce::ParameterID{ "filterReso", 1 }, "Filter Resonance",
+        juce::NormalisableRange<float>(0.0f, 100.0f, 0.1f), 0.0f));
+    layout.add(std::make_unique<juce::AudioParameterFloat>(
+        juce::ParameterID{ "filterDrive", 1 }, "Filter Drive",
+        juce::NormalisableRange<float>(0.0f, 100.0f, 0.1f), 0.0f));
+
+    // --- Envelope section (KnobStrip) ---
+    layout.add(std::make_unique<juce::AudioParameterFloat>(
+        juce::ParameterID{ "envAttack", 1 }, "Attack",
+        juce::NormalisableRange<float>(0.1f, 5000.0f, 0.1f, 0.3f), 10.0f));
+    layout.add(std::make_unique<juce::AudioParameterFloat>(
+        juce::ParameterID{ "envDecay", 1 }, "Decay",
+        juce::NormalisableRange<float>(0.1f, 5000.0f, 0.1f, 0.3f), 100.0f));
+    layout.add(std::make_unique<juce::AudioParameterFloat>(
+        juce::ParameterID{ "envSustain", 1 }, "Sustain",
+        juce::NormalisableRange<float>(0.0f, 100.0f, 0.1f), 70.0f));
+    layout.add(std::make_unique<juce::AudioParameterFloat>(
+        juce::ParameterID{ "envRelease", 1 }, "Release",
+        juce::NormalisableRange<float>(0.1f, 10000.0f, 0.1f, 0.3f), 200.0f));
+
+    // --- Toggle / Checkbox demo params ---
+    layout.add(std::make_unique<juce::AudioParameterBool>(
+        juce::ParameterID{ "bypass", 1 }, "Bypass", false));
+    layout.add(std::make_unique<juce::AudioParameterBool>(
+        juce::ParameterID{ "hqMode", 1 }, "HQ Mode", false));
+    layout.add(std::make_unique<juce::AudioParameterBool>(
+        juce::ParameterID{ "oversample", 1 }, "Oversample 2x", false));
+    layout.add(std::make_unique<juce::AudioParameterBool>(
+        juce::ParameterID{ "limiter", 1 }, "Limiter", true));
+
+    // --- Dropdown / ComboBox demo params ---
+    layout.add(std::make_unique<juce::AudioParameterChoice>(
+        juce::ParameterID{ "filterType", 1 }, "Filter Type",
+        juce::StringArray{ "LPF", "HPF", "BPF", "Notch", "Peak" }, 0));
+    layout.add(std::make_unique<juce::AudioParameterChoice>(
+        juce::ParameterID{ "waveform", 1 }, "Waveform",
+        juce::StringArray{ "Sine", "Triangle", "Saw", "Square", "Noise" }, 0));
+
+    return layout;
+}
+
+//==============================================================================
 // This creates new instances of the plugin..
 juce::AudioProcessor* JUCE_CALLTYPE createPluginFilter()
 {

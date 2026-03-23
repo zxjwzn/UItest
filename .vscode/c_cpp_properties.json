@@ -3,15 +3,15 @@
         {
             "name": "JUCE Plugin (MSVC)",
             "intelliSenseMode": "windows-msvc-x64",
-            "compilerPath": "D:/Application/VisualStudio/VC/Tools/MSVC/14.50.35717/bin/Hostx64/x64/cl.exe",
+            "compilerPath": "D:/Applications/VisualStudio/C++/VC/Tools/MSVC/14.50.35717/bin/Hostx64/x64/cl.exe",
             "cStandard": "c17",
             "cppStandard": "c++17",
             "windowsSdkVersion": "10.0.22621.0",
             "includePath": [
                 "${workspaceFolder}/Source",
                 "${workspaceFolder}/JuceLibraryCode",
-                "D:/C++repositories/JUCE/App/modules",
-                "D:/C++repositories/JUCE/App/modules/juce_audio_processors_headless/format_types/VST3_SDK"
+                "D:/Codes/C++/JUCE/App/modules",
+                "D:/Codes/C++/JUCE/App/modules/juce_audio_processors_headless/format_types/VST3_SDK"
             ],
             "defines": [
                 "_CRT_SECURE_NO_WARNINGS",

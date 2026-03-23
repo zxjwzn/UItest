@@ -16,7 +16,7 @@
         {
             "label": "Build: Standalone (Debug)",
             "type": "process",
-            "command": "D:/Application/VisualStudio/MSBuild/Current/Bin/amd64/MSBuild.exe",
+            "command": "D:/Applications/VisualStudio/C++/MSBuild/Current/Bin/amd64/MSBuild.exe",
             "args": [
                 "${workspaceFolder}/Builds/VisualStudio2026/UItest.sln",
                 "/p:Configuration=Debug",
@@ -33,7 +33,7 @@
         {
             "label": "Build: Standalone (Release)",
             "type": "process",
-            "command": "D:/Application/VisualStudio/MSBuild/Current/Bin/amd64/MSBuild.exe",
+            "command": "D:/Applications/VisualStudio/C++/MSBuild/Current/Bin/amd64/MSBuild.exe",
             "args": [
                 "${workspaceFolder}/Builds/VisualStudio2026/UItest.sln",
                 "/p:Configuration=Release",
@@ -50,7 +50,7 @@
         {
             "label": "Build: All (Debug)",
             "type": "process",
-            "command": "D:/Application/VisualStudio/MSBuild/Current/Bin/amd64/MSBuild.exe",
+            "command": "D:/Applications/VisualStudio/C++/MSBuild/Current/Bin/amd64/MSBuild.exe",
             "args": [
                 "${workspaceFolder}/Builds/VisualStudio2026/UItest.sln",
                 "/p:Configuration=Debug",
@@ -67,7 +67,7 @@
         {
             "label": "Build: All (Release)",
             "type": "process",
-            "command": "D:/Application/VisualStudio/MSBuild/Current/Bin/amd64/MSBuild.exe",
+            "command": "D:/Applications/VisualStudio/C++/MSBuild/Current/Bin/amd64/MSBuild.exe",
             "args": [
                 "${workspaceFolder}/Builds/VisualStudio2026/UItest.sln",
                 "/p:Configuration=Release",
@@ -84,7 +84,7 @@
         {
             "label": "Rebuild: All (Debug)",
             "type": "process",
-            "command": "D:/Application/VisualStudio/MSBuild/Current/Bin/amd64/MSBuild.exe",
+            "command": "D:/Applications/VisualStudio/C++/MSBuild/Current/Bin/amd64/MSBuild.exe",
             "args": [
                 "${workspaceFolder}/Builds/VisualStudio2026/UItest.sln",
                 "/t:Rebuild",
@@ -102,7 +102,7 @@
         {
             "label": "Clean: All",
             "type": "process",
-            "command": "D:/Application/VisualStudio/MSBuild/Current/Bin/amd64/MSBuild.exe",
+            "command": "D:/Applications/VisualStudio/C++/MSBuild/Current/Bin/amd64/MSBuild.exe",
             "args": [
                 "${workspaceFolder}/Builds/VisualStudio2026/UItest.sln",
                 "/t:Clean",
